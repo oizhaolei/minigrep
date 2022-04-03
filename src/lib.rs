@@ -5,7 +5,7 @@ use std::fs;
 #[derive(Parser)]
 pub struct Config {
     #[clap(short = 'i', long = "insensitive")]
-    pub case_sensitive: i16,
+    pub case_insensitive: bool,
     pub query: String,
     #[clap(parse(from_os_str))]
     pub filename: std::path::PathBuf,
@@ -20,10 +20,10 @@ impl Config {
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let contents = fs::read_to_string(config.filename)?;
 
-    let results = if config.case_sensitive == 1 {
-        search(&config.query, &contents)
-    } else {
+    let results = if config.case_insensitive {
         search_case_insensitive(&config.query, &contents)
+    } else {
+        search(&config.query, &contents)
     };
 
     for line in results {
