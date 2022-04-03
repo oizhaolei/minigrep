@@ -1,41 +1,26 @@
-use std::env;
+use clap::Parser;
 use std::error::Error;
 use std::fs;
 
+#[derive(Parser)]
 pub struct Config {
+    #[clap(short = 'i', long = "insensitive")]
+    pub case_sensitive: i16,
     pub query: String,
-    pub filename: String,
-    pub case_sensitive: bool,
+    #[clap(parse(from_os_str))]
+    pub filename: std::path::PathBuf,
 }
 
 impl Config {
-    pub fn new(mut args: env::Args) -> Result<Config, &'static str> {
-        args.next();
-
-        let query = match args.next() {
-            Some(arg) => arg,
-            None => return Err("Didn't get a query string"),
-        };
-
-        let filename = match args.next() {
-            Some(arg) => arg,
-            None => return Err("Didn't get a file name"),
-        };
-
-        let case_sensitive = env::var("CASE_INSENSITIVE").is_err();
-
-        return Ok(Config {
-            query,
-            filename,
-            case_sensitive,
-        });
+    pub fn new() -> Config {
+        Config::parse()
     }
 }
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let contents = fs::read_to_string(config.filename)?;
 
-    let results = if config.case_sensitive {
+    let results = if config.case_sensitive == 1 {
         search(&config.query, &contents)
     } else {
         search_case_insensitive(&config.query, &contents)
@@ -79,6 +64,7 @@ mod tests {
 Rust:
 safe, fast, productive.
 Pick three.
+Trust me.
 Duct tape.";
         assert_eq!(vec!["safe, fast, productive."], search(query, contents));
     }
